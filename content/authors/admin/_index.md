@@ -44,11 +44,13 @@ email: ""
 
 I'm a data enthusiast looking to make a difference.
 
-Recently, I was a Deputy Data Director on Jon Ossoff's
-[campaign for U.S. Senate](https://electjon.com); before that, I was the Data Director for Sri Kulkarni's
-[congressional campaign in TX-22](https://sri2020.com). In June 2020, I graduated from Stanford
+Now, I lead technology modernization efforts on the U.S. Senate Committee on Appropriations.
+Before that, through [TechCongress](https://techcongress.io), I was a Technology Policy Fellow on the House Committee on Oversight and Reform.
+After graduating in June 2020 from Stanford
 University with a B.S. in computer science (focus: systems and AI) and M.S. in
-statistics (focus: causal inference). 
+statistics (focus: causal inference), I dove into the world of political campaigns: I was Deputy Data Director on Jon Ossoff's
+[campaign for U.S. Senate](https://electjon.com) and Data Director on Sri Kulkarni's
+[congressional campaign](https://sri2020.com). 
 
 While I wasn't researching new methods for estimating causal effects at
 Stanford, I oversaw the student leadership team for [Camp Kesem at Stanford](https://campkesemstanford.org).
