@@ -44,8 +44,9 @@ email: ""
 
 I'm a data enthusiast looking to make a difference.
 
-Now, I lead technology modernization efforts on the U.S. Senate Committee on Appropriations.
-Before that, through [TechCongress](https://techcongress.io), I was a Technology Policy Fellow on the House Committee on Oversight and Reform.
+I lead technology modernization efforts on the [U.S. Senate Committee on Appropriations](https://www.appropriations.senate.gov/).
+Before that, I was a [TechCongress](https://techcongress.io) Technology Policy Fellow on the House Committee on Oversight and Reform.
+
 After graduating in June 2020 from Stanford
 University with a B.S. in computer science (focus: systems and AI) and M.S. in
 statistics (focus: causal inference), I dove into the world of political campaigns: I was Deputy Data Director on Jon Ossoff's
