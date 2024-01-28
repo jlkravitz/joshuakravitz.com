@@ -5,11 +5,11 @@ authors:
   - admin
 title: Joshua Kravitz
 role: ""
-bio: I'm a data enthusiast looking to make a difference.
+bio: I'm a technologist looking to make a difference.
 interests:
-  - Progressive analytics
+  - Government service delivery
   - Civic engagement
-  - Causal inference
+  - Progressive analytics
   - Leadership and management
 social:
   - icon: envelope
