@@ -42,7 +42,7 @@ name: Joshua Kravitz
 email: ""
 ---
 
-I'm a data enthusiast looking to make a difference.
+I'm a technologist looking to make a difference.
 
 I lead technology modernization efforts in the [U.S. Senate Committee on Appropriations](https://www.appropriations.senate.gov/).
 Before coming to the Senate, I worked on the House Committee on Oversight and Reform through the [TechCongress Program](https://techcongress.io), with a focus on IT modernization, customer experience, and data governance.
