@@ -1,5 +1,29 @@
+.DS_Store
+
+# Hugo
 public/
 .idea/
 resources/*
-.DS_Store
 .Rproj.user
+
+# R
+.Rhistory
+.Renviron
+
+# Data
+**/data/**/*.rds
+**/data/**/*.csv
+**/data/**/*.shp
+**/data/**/*.cpg
+**/data/**/*.prj
+**/data/**/*.shx
+**/data/**/*.shp.xml
+**/data/**/*.iso.xml
+
+# knitr and R markdown default cache directories
+*_cache/
+/cache/
+
+# Temporary files created by R markdown
+*.utf8.md
+*.knit.md
