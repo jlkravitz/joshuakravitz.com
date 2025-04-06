@@ -1,0 +1,581 @@
+---
+title: "What happened in TX-22?"
+author: Joshua Kravitz
+date: '2021-01-17'
+slug: []
+categories: []
+tags: []
+subtitle: ''
+summary: ''
+authors: []
+lastmod: '2021-01-17T21:05:05-08:00'
+featured: no
+draft: no
+image: 
+  caption: ''
+  focal_point: ''
+  preview_only: yes
+projects: []
+---
+
+
+
+<p>This is a test post!</p>
+<pre class="r"><code>library(tidyverse)
+library(ggtext)
+
+color_dem &lt;- &quot;#0015BC&quot;
+color_gop &lt;- &quot;#E9141D&quot;</code></pre>
+<pre class="r"><code>pct_results &lt;- 
+  read_csv(
+    &quot;data/1103_results_by_pct.csv&quot;,
+    col_types = cols(
+      county = col_character(),
+      office = col_character(),
+      .default = col_number()
+    )
+  ) 
+
+pct_results &lt;- 
+  pct_results %&gt;% 
+  semi_join(
+    pct_results %&gt;% 
+      filter(office == &quot;tx22&quot;) %&gt;% 
+      select(county, pct),
+    by = c(&quot;county&quot;, &quot;pct&quot;)
+  ) %&gt;% 
+  mutate(votes = dem + gop + other) %&gt;% 
+  mutate(
+    dem_vote_share = dem / votes,
+    gop_vote_share = gop / votes,
+    mov = dem_vote_share - gop_vote_share
+  ) %&gt;% 
+  relocate(mov, dem_vote_share, gop_vote_share, .after = pct)
+
+pct_demographics &lt;- read_csv(
+  &quot;data/1103_demographics_by_pct.csv&quot;,
+  col_types = cols(
+    county = col_character(),
+    .default = col_double()
+  )
+)
+
+pct_scores &lt;- read_csv(
+  &quot;data/precinct_scores.csv&quot;,
+  col_types = cols(
+    state_code = col_character(),
+    .default = col_double()
+  )
+)</code></pre>
+<pre class="r"><code>  # It seems results for these precincts just don&#39;t exist from 2018.
+  # I&#39;m not sure why, but I checked:
+  #   1) `democrats.election_results.g2018_tsmart_precinct` in BQ
+  #   2) MIT Election Lab data: https://github.com/MEDSL/2018-elections-official/blob/master/precinct_2018.zip
+  # They both didn&#39;t have these precincts
+  # filter(!is.na(mov_2020), !is.na(mov_2018))
+
+pct_tx22 &lt;- 
+  pct_results %&gt;% 
+    filter(office == &quot;tx22&quot;)
+  
+pct_tx22_wide &lt;- 
+  pct_tx22 %&gt;% 
+    pivot_wider(
+      id_cols = c(county, pct),
+      names_from = year,
+      values_from = c(votes, mov)
+    ) %&gt;% 
+    left_join(pct_demographics, by = c(&quot;county&quot;, &quot;pct&quot;)) %&gt;% 
+    mutate(
+      turnout_2020 = votes_2020 / registered_voters_2020,
+      turnout_2018 = votes_2018 / registered_voters_2018,
+      turnout_2020 = if_else(turnout_2020 &gt; 1, NA_real_, turnout_2020),
+      turnout_2018 = if_else(turnout_2018 &gt; 1, NA_real_, turnout_2018)
+    ) </code></pre>
+<pre class="r"><code>pct_results %&gt;% 
+  group_by(year, office) %&gt;% 
+  summarize(
+    votes = sum(votes), 
+    dem_margin = round((sum(dem) / sum(votes) - sum(gop) / sum(votes)) * 100, 2)
+  ) %&gt;% 
+  knitr::kable()</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="right">year</th>
+<th align="left">office</th>
+<th align="right">votes</th>
+<th align="right">dem_margin</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="right">2016</td>
+<td align="left">president</td>
+<td align="right">308653</td>
+<td align="right">-7.84</td>
+</tr>
+<tr class="even">
+<td align="right">2016</td>
+<td align="left">tx22</td>
+<td align="right">305543</td>
+<td align="right">-19.04</td>
+</tr>
+<tr class="odd">
+<td align="right">2018</td>
+<td align="left">senate</td>
+<td align="right">299335</td>
+<td align="right">-0.64</td>
+</tr>
+<tr class="even">
+<td align="right">2018</td>
+<td align="left">tx22</td>
+<td align="right">297405</td>
+<td align="right">-4.91</td>
+</tr>
+<tr class="odd">
+<td align="right">2020</td>
+<td align="left">president</td>
+<td align="right">421369</td>
+<td align="right">-0.93</td>
+</tr>
+<tr class="even">
+<td align="right">2020</td>
+<td align="left">senate</td>
+<td align="right">411634</td>
+<td align="right">-6.19</td>
+</tr>
+<tr class="odd">
+<td align="right">2020</td>
+<td align="left">tx22</td>
+<td align="right">407200</td>
+<td align="right">-6.94</td>
+</tr>
+</tbody>
+</table>
+<div id="how-did-we-fare-compared-to-2018" class="section level2">
+<h2>How did we fare compared to 2018?</h2>
+<pre class="r"><code>pct_tx22_wide %&gt;% 
+  ggplot(aes(mov_2020 - mov_2018)) +
+  geom_histogram(binwidth = 0.025) +
+  geom_vline(xintercept = 0, color = &quot;red&quot;, alpha = 0.5, size = 2) +
+  scale_x_continuous(labels = scales::label_percent(accuracy = 1)) +
+  theme_light() +
+  labs(
+    title = &quot;TX-22: &#39;18 to &#39;20 Margin of Victories by PCT&quot;,
+    x = &quot;2018-2020 change in Democratic vote margin&quot;
+  )</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-5-1.png" width="672" /></p>
+<p>We lost support in many precincts: what happened?</p>
+<p>To investigate, we’ll perform an Ecological Study at the precinct level, for each of 4 ethnicities modeled in the voter file: White, Black, Asian, and Hispanic.</p>
+<pre class="r"><code>margin_change_by_demographic &lt;- function(...) {
+  pct_plot(
+    ..., 
+    y_var = mov_2020 - mov_2018,
+    y_lab = &quot;2018-2020 change in\nDemocratic vote margin, %&quot;
+  )
+}
+
+pct_plot &lt;- function(
+  df, x_var, y_var,
+  title, x_lab, y_lab,
+  x_min = 0, x_max = 1, x_jump = 0.05, 
+  y_min = -1, y_max = 1, y_jump = 0.05,
+  href = TRUE
+) {
+  x_var &lt;- enquo(x_var)
+  y_var &lt;- enquo(y_var)
+  
+  g &lt;- 
+    df %&gt;% 
+    ggplot(aes(!!x_var, !!y_var))
+  
+  if (href) {
+    g &lt;- g +  geom_hline(yintercept = 0, color = color_gop, alpha = 0.2, size = 2)
+  }
+  
+  g +
+    geom_point(
+      aes(size = votes_2020, fill = mov_2020),
+      # alpha = 0.5,
+      shape = 21
+    ) +
+    geom_smooth() +
+    scale_x_continuous(
+      breaks = seq(x_min, x_max, x_jump),
+      minor_breaks = FALSE,
+      labels = scales::label_percent(accuracy = 1, suffix = &quot;&quot;)
+    ) +
+    scale_y_continuous(
+      breaks = seq(y_min, y_max, y_jump), 
+      minor_breaks = FALSE,
+      labels = scales::label_percent(accuracy = 1, suffix = &quot;&quot;),
+    ) +
+    scale_fill_gradient2(
+      low = color_gop, 
+      high = color_dem,
+      labels = scales::label_percent(accuracy = 1, suffix = &quot;&quot;)
+    ) +
+    scale_size(range = c(1, 10)) +
+    labs(
+      title = title,
+      x = x_lab,
+      y = y_lab,
+      size = &quot;*2020 votes*&quot;,
+      fill = &quot;*2020 Democratic margin, %*&quot;
+    ) +
+     guides(
+      fill = guide_colorbar(
+        title.position = &quot;top&quot;,
+        barwidth = 8,
+        barheight = 0.25,
+        raster = FALSE,
+        nbin = 8,
+        ticks = FALSE,
+      ),
+      size = guide_legend(title.position = &quot;top&quot;)
+    ) +
+    theme_minimal() + 
+    theme(
+      legend.position = &quot;bottom&quot;,
+      legend.title = element_markdown(size = 8),
+      legend.text = element_text(size = 6)
+    )
+}</code></pre>
+</div>
+<div id="change-in-democratic-margin-by-ethnicity" class="section level2">
+<h2>2018-2020 change in Democratic margin, by ethnicity</h2>
+<pre class="r"><code>pct_tx22_wide %&gt;% 
+  margin_change_by_demographic(
+    model_white / registered_voters_2020, 
+    &quot;White&quot;, 
+    &quot;White voters, %&quot;,
+    x_jump = 0.1
+  )</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-7-1.png" width="672" /></p>
+<pre class="r"><code>pct_tx22_wide %&gt;% 
+  margin_change_by_demographic(
+    model_aapi / registered_voters_2020, 
+    &quot;AAPI&quot;, 
+    &quot;AAPI voters, %&quot;,
+    x_jump = 0.1
+  )</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-8-1.png" width="672" /></p>
+<pre class="r"><code>pct_tx22_wide %&gt;% 
+  margin_change_by_demographic(
+    model_black / registered_voters_2020, 
+    &quot;Black&quot;, 
+    &quot;Black voters, %&quot;
+  )</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-8-2.png" width="672" /></p>
+<pre class="r"><code>pct_tx22_wide %&gt;% 
+  margin_change_by_demographic(
+    model_latinx / registered_voters_2020, 
+    &quot;Latinx&quot;, 
+    &quot;Latinx voters, %&quot;
+  )</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-8-3.png" width="672" />
+Some key takeaways:</p>
+<ol style="list-style-type: decimal">
+<li>We lost support in precincts with a higher proportion of AAPI voters.</li>
+<li>We lost support in precincts with a lower proportion of white voters.</li>
+<li>In precincts with a higher proportion of white voters, support remained steady compared to 2018, though we still suffered big losses in 2020.</li>
+<li>Precincts with a higher proportion of black voters supported us.</li>
+<li>Support among high-density latinx precincts was generally worse this cycle, though overall these precincts were a mixed bag (some went for Nehls, some went for Kulkarni).</li>
+</ol>
+<p>AAPI is most interesting, given it was a major focus of our campaign. Let’s dive in.</p>
+</div>
+<div id="what-happened-to-the-aapi-population" class="section level2">
+<h2>What happened to the AAPI population?</h2>
+</div>
+<div id="r-pct_tx22_wide-margin_change_by_demographic-desi-registered_voters_2020-high-density-desi-precincts-lost-support-desi-voters" class="section level1">
+<h1><code>{r} # pct_tx22_wide %&gt;%  #   margin_change_by_demographic( #     desi / registered_voters_2020,  #     "High-density Desi precincts lost support",  #     "Desi voters, %" #   ) #</code></h1>
+<pre class="r"><code>pct_tx22_wide %&gt;% 
+  mutate(
+    pct_desi = desi / registered_voters_2020,
+    highlight = pct_desi &gt;= 0.1
+  ) %&gt;% 
+  ggplot(aes(mov_2018, mov_2020 - mov_2018)) +
+  geom_hline(yintercept = 0, color = &quot;gray&quot;, alpha = 0.5, size = 1) +
+  geom_vline(xintercept = 0, color = &quot;gray&quot;, alpha = 0.5, size = 1) +
+  geom_point(
+    aes(
+      size = votes_2020, 
+      color = pct_desi, 
+      alpha = highlight
+    ), 
+    shape = 20
+  ) +
+  geom_text(aes(
+    label = if_else(highlight, as.character(pct), &quot;&quot;)), 
+    size = 1.5
+  ) +
+  annotate(
+    &quot;text&quot;, 
+    x = Inf, 
+    y = 0, 
+    label = c(&quot;Better 2020 margin&quot;, &quot;Worse 2020 margin&quot;),
+    size = 2,
+    color = c(color_dem, color_gop),
+    hjust = 1.05,
+    vjust = c(-1, 1.8)
+  ) +
+  scale_alpha_discrete(range = c(0.1, 0.5)) +
+  scale_size(breaks = seq(0, 10000, 2500), range = c(1, 15)) +
+  scale_color_viridis_c(label = scales::percent_format(accuracy = 1)) +
+  scale_x_continuous(
+    breaks = seq(-1, 1, 0.2), 
+    minor_breaks = FALSE,
+    labels = scales::percent_format()
+  ) +
+  scale_y_continuous(
+    breaks = seq(-1, 1, 0.05), 
+    minor_breaks = FALSE,
+    labels = scales::percent_format(accuracy = 1)
+  ) +
+  guides(
+    alpha = FALSE, 
+    size = FALSE, 
+    color = guide_colorbar(
+      barwidth = 0.25,
+      barheight = 9,
+      raster = FALSE,
+      nbin = 8,
+      ticks = FALSE
+    )
+  ) +
+  labs(
+    title = &quot;Change in precinct margin (precincts with &gt; 10% desis are highlighted)&quot;,
+    subtitle = &quot;High-density Desi precincts lost support&quot;,
+    x = &quot;2018 Democratic vote margin&quot;,
+    y = &quot;2018-2020 change in Democratic vote margin&quot;,
+    color = &quot;% Desi&quot;,
+    caption = &quot;Source: DNC (&#39;18 data), FB/Brazoria/Harris Board of Elections (&#39;20 data)&quot;
+  ) +
+  theme_minimal() + 
+  theme(plot.caption = element_text(size = 5))</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-9-1.png" width="672" />
+Both these plots basically show the same thing – high-density Desi precincts lost support.
+Let’s see if Hindus and Muslims behaved any differently.</p>
+<pre class="r"><code>pct_tx22_wide %&gt;% 
+  mutate(
+    better = mov_2020 - mov_2018 &gt; 0,
+    frac_muslim = muslim / registered_voters_2020,
+    frac_hindu = hindu / registered_voters_2020
+  ) %&gt;%
+  ggplot(aes(frac_muslim, frac_hindu)) +
+  geom_point(
+    aes(
+      size = abs(mov_2020 - mov_2018), fill = better),
+    alpha = 0.3,
+    shape = 21
+  ) +
+  scale_x_continuous(
+    breaks = seq(0, 1, 0.05), 
+    minor_breaks = FALSE,
+    labels = scales::percent
+  ) +
+  scale_y_continuous(
+    breaks = seq(0, 1, 0.05), 
+    minor_breaks = FALSE,
+    labels = scales::percent
+  ) +
+  guides(
+    fill = FALSE
+  ) +
+  labs(
+    title = &quot;Change in precinct margin: Hindu and Muslim populations&quot;,
+    x = &quot;% Muslim&quot;,
+    y = &quot;% Hindu&quot;,
+    # size = &quot;No. 2020 Voters&quot;,
+    size = &quot;Change in Margin&quot;,
+    caption = &quot;Source: DNC (&#39;18 data), FB/Brazoria/Harris Board of Elections (&#39;20 data)&quot;
+  ) +
+  theme_minimal() +
+  theme(plot.caption = element_text(size = 5), legend.position = &quot;bottom&quot;)</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-10-1.png" width="672" />
+They’re pretty well-correlated, so not much to find here.</p>
+<p>So it looks like we did better with whites than minorities (not in absolute terms, just compared to 2018).
+To Note: This assumes static demographics for the precincts since 2018 – so e.g., if more minorities entered these
+white-heavy communities (even if they were still white-heavy), it’s possible the margins went up not because of change
+in voting behavior of white voters, but rather because of a change in demographics.</p>
+<p>Same thing for non-white communities: maybe votes decreased for Sri because of a population shift away from those communities
+of color … that feels unlikely but possible.</p>
+<p>If I can get 2018 demographic data, can I do a difference in difference?</p>
+<p>Sri says generally non-white proportion of electorate increased … so increase in white precinct support may just come
+from more non-white voters in those white-heavy precincts (compared to 2018).</p>
+<div id="how-did-kulkarni-compare-to-biden-and-hegar" class="section level2">
+<h2>How did Kulkarni compare to Biden and Hegar?</h2>
+<pre class="r"><code># Maybe something? Shows gap in dem margin b/t president and senate/congress that&#39;s
+# largest in high-density AAPI precincts.
+pct_results %&gt;% 
+  filter(year == 2020) %&gt;% 
+  left_join(pct_demographics, by = c(&quot;county&quot;, &quot;pct&quot;)) %&gt;% 
+  ggplot(aes(model_aapi / registered_voters_2020, mov)) +
+  geom_smooth(aes(group = office, color = office), alpha = 0.2) +
+  geom_point(aes(fill = office), alpha = 0.5, shape = 21) +
+  labs(
+    title = &quot;Margin of Victory &quot;
+  ) +
+  theme_minimal()</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-11-1.png" width="672" /></p>
+<pre class="r"><code>pct_results %&gt;% 
+  filter(year == 2020) %&gt;% 
+  group_by(year, office) %&gt;% 
+  summarize(
+    gop = sum(gop), 
+    dem = sum(dem),
+    other = sum(other),
+    .groups = &quot;drop&quot;
+  ) %&gt;% 
+  transmute(
+    office,
+    votes = dem + gop + other,
+    dem_vote_share = dem / votes * 100,
+    gop_vote_share = gop / votes * 100,
+    other_vote_share = other / votes * 100,
+    mov = (dem_vote_share - gop_vote_share)
+  )</code></pre>
+<pre><code>## # A tibble: 3 x 6
+##   office     votes dem_vote_share gop_vote_share other_vote_share    mov
+##   &lt;chr&gt;      &lt;dbl&gt;          &lt;dbl&gt;          &lt;dbl&gt;            &lt;dbl&gt;  &lt;dbl&gt;
+## 1 president 421369           48.8           49.7             1.47 -0.931
+## 2 senate    411634           45.8           52.0             2.25 -6.19 
+## 3 tx22      407200           44.6           51.5             3.87 -6.94</code></pre>
+<pre class="r"><code>df_annotation &lt;- 
+  tibble(
+    county = factor(&quot;Fort Bend&quot;, levels = c(&quot;Fort Bend&quot;, &quot;Brazoria&quot;, &quot;Harris&quot;)),
+    year = &quot;2020 Kulkarni v. Hegar&quot;
+  )
+pct_results %&gt;% 
+  # filter(year == 2018 | office == &quot;president&quot;) %&gt;% 
+  pivot_wider(
+    id_cols = c(county, pct),
+    names_from = c(office, year),
+    names_prefix = &quot;mov_&quot;,
+    values_from = mov
+  ) %&gt;% 
+  left_join(pct_demographics, by = c(&quot;county&quot;, &quot;pct&quot;)) %&gt;% 
+  mutate(
+    mov_dropoff_2020 = mov_tx22_2020 - mov_senate_2020,
+    mov_dropoff_2018 = mov_tx22_2018 - mov_senate_2018
+  ) %&gt;% 
+  filter(!is.na(mov_dropoff_2020), !is.na(mov_dropoff_2018)) %&gt;% 
+  pivot_longer(
+    cols = starts_with(&quot;mov_dropoff&quot;),
+    names_to = &quot;year&quot;,
+    names_prefix = &quot;mov_dropoff_&quot;,
+    values_to = &quot;mov_dropoff&quot;
+  ) %&gt;% 
+  mutate(
+    year = fct_recode(
+      year, 
+      &quot;2018 Kulkarni v. O&#39;Rourke&quot; = &quot;2018&quot;,
+      &quot;2020 Kulkarni v. Hegar&quot; = &quot;2020&quot;
+    ),
+    county = fct_relevel(county, &quot;Fort Bend&quot;, &quot;Brazoria&quot;, &quot;Harris&quot;)
+  ) %&gt;% 
+  ggplot() +
+  geom_histogram(aes(mov_dropoff), binwidth = 0.01) +
+  geom_vline(
+    aes(xintercept = avg, color = avg &gt; 0),
+    alpha = 0.5,
+    size = 1,
+    data = function(df) {
+      df %&gt;%
+        group_by(county, year) %&gt;% 
+        summarize(avg = median(mov_dropoff), .groups = &quot;drop&quot;)
+    }
+  ) +
+  geom_vline(xintercept = 0, color = &quot;grey&quot;, alpha = 0.5, size = 1) +
+  geom_text(
+    x = -6, y = 18,
+    label = &quot;Median ΔMoV\nacross precincts&quot;,
+    size = 2.5,
+    data = df_annotation,
+  ) +
+  geom_segment(
+    x = -3.5, y = 18.5, xend = -2, yend = 15.5,
+    arrow = arrow(length = unit(0.2, &quot;cm&quot;)),
+    data = df_annotation
+  ) +
+  scale_x_continuous(
+    breaks = seq(-1, 1, 0.02),
+    minor_breaks = FALSE,
+    labels = scales::label_percent(accuracy = 1)
+  ) +
+  scale_color_manual(values = c(color_gop, color_dem)) +
+  facet_grid(rows = vars(county), cols = vars(year)) +
+  labs(
+    title = str_glue(
+      &quot;Did the median TX-22 precinct perform **&lt;span style=&#39;color:{color_dem}&#39;&gt;better&lt;/span&gt;** or **&lt;span style=&#39;color:{color_gop}&#39;&gt;worse&lt;/span&gt;** for Kulkarni &lt;br/&gt;than for the up-ballot Senate race?&quot;
+    ),
+    subtitle = &quot;In 2018, median **Democratic margin** is close across all three counties.&lt;br/&gt;In 2020, median **Margin of Victory (MoV)** behind in Fort Bend: Nehls&#39; name recognition, or something else?&quot;,
+    x = &quot;Difference in Democratic margin (Kulkarni minus Senate)&quot;,
+    caption = &quot;Source: DNC (&#39;18 data), FB/Brazoria/Harris Board of Elections (&#39;20 data)&quot;
+  ) +
+  guides(color = FALSE) +
+  theme_bw() +
+  theme(
+    plot.title = element_markdown(),
+    plot.subtitle = element_markdown(size = 8),
+    plot.caption = element_text(size = 5),
+  )</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-13-1.png" width="672" /></p>
+<pre class="r"><code>pct_results %&gt;% 
+  left_join(pct_demographics, by = c(&quot;county&quot;, &quot;pct&quot;)) %&gt;% 
+  filter(year == &quot;2020&quot;, office == &quot;tx22&quot;) %&gt;% 
+  group_by(year, office, county) %&gt;% 
+  summarize(sum(desi, na.rm = TRUE)/sum(registered_voters_2020, na.rm = TRUE))</code></pre>
+<pre><code>## # A tibble: 3 x 4
+## # Groups:   year, office [1]
+##    year office county    `sum(desi, na.rm = TRUE)/sum(registered_voters_2020, n…
+##   &lt;dbl&gt; &lt;chr&gt;  &lt;chr&gt;                                                       &lt;dbl&gt;
+## 1  2020 tx22   Brazoria                                                   0.0306
+## 2  2020 tx22   Fort Bend                                                  0.102 
+## 3  2020 tx22   Harris                                                     0.0374</code></pre>
+<pre class="r"><code>pct_results %&gt;% 
+  pivot_wider(
+    id_cols = c(county, pct),
+    names_from = c(office, year),
+    names_prefix = &quot;votes_&quot;,
+    values_from = votes
+  ) %&gt;% 
+  mutate(undervotes = votes_president_2020 - votes_tx22_2020) %&gt;% 
+  left_join(pct_tx22_wide, by = c(&quot;county&quot;, &quot;pct&quot;)) %&gt;% 
+  pct_plot(
+    model_white / registered_voters_2020, 
+    undervotes / votes_president_2020,
+    title = &quot;Ballot drop-off more common in precincts with more non-white voters&quot;,
+    x_lab = &quot;White Voters, %&quot;,
+    y_lab = &quot;Undervotes, %&quot;,
+    y_jump = 0.01,
+    href = FALSE
+  ) +
+  labs(
+    subtitle = &quot;Undervotes: fraction of presidential voters who didn&#39;t vote for their U.S. House representative&quot;
+  )</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-15-1.png" width="672" /></p>
+<pre class="r"><code>  # theme(title = elemnt_text(size = 5))</code></pre>
+<pre class="r"><code>pct_results %&gt;% 
+  pivot_wider(
+    id_cols = c(county, pct),
+    names_from = c(office, year),
+    names_prefix = &quot;votes_&quot;,
+    values_from = votes
+  ) %&gt;% 
+  summarize(sum(votes_president_2020))</code></pre>
+<pre><code>## # A tibble: 1 x 1
+##   `sum(votes_president_2020)`
+##                         &lt;dbl&gt;
+## 1                      421369</code></pre>
+<hr />
+</div>
+<div id="theories" class="section level2">
+<h2>Theories</h2>
+<p>Did Hindus &amp; Muslims vote for Nehls, Leblanc, or not vote at all?
+Muslims might have voted for Leblanc (didn’t like Troy). Hindus likely voted for Nehls.</p>
+<p>phone banks – who we dialed, who answered the phone (demographics),</p>
+<p>how many voted from each group, what was their propensity dem or gop, % of that demographic in TX-22</p>
+</div>
+</div>

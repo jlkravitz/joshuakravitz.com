@@ -1,0 +1,571 @@
+---
+title: "What happened in TX-22?"
+author: Joshua Kravitz
+date: '2021-01-17'
+slug: []
+categories: []
+tags: []
+subtitle: ''
+summary: ''
+authors: []
+lastmod: '2021-01-17T21:05:05-08:00'
+featured: no
+draft: no
+image: 
+  caption: ''
+  focal_point: ''
+  preview_only: yes
+projects: []
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE, error = FALSE)
+```
+
+This is a test post!
+
+
+
+```{r}
+library(tidyverse)
+library(ggtext)
+
+color_dem <- "#0015BC"
+color_gop <- "#E9141D"
+```
+
+```{r}
+pct_results <- 
+  read_csv(
+    "data/1103_results_by_pct.csv",
+    col_types = cols(
+      county = col_character(),
+      office = col_character(),
+      .default = col_number()
+    )
+  ) 
+
+pct_results <- 
+  pct_results %>% 
+  semi_join(
+    pct_results %>% 
+      filter(office == "tx22") %>% 
+      select(county, pct),
+    by = c("county", "pct")
+  ) %>% 
+  mutate(votes = dem + gop + other) %>% 
+  mutate(
+    dem_vote_share = dem / votes,
+    gop_vote_share = gop / votes,
+    mov = dem_vote_share - gop_vote_share
+  ) %>% 
+  relocate(mov, dem_vote_share, gop_vote_share, .after = pct)
+
+pct_demographics <- read_csv(
+  "data/1103_demographics_by_pct.csv",
+  col_types = cols(
+    county = col_character(),
+    .default = col_double()
+  )
+)
+
+pct_scores <- read_csv(
+  "data/precinct_scores.csv",
+  col_types = cols(
+    state_code = col_character(),
+    .default = col_double()
+  )
+)
+```
+
+```{r}
+  # It seems results for these precincts just don't exist from 2018.
+  # I'm not sure why, but I checked:
+  #   1) `democrats.election_results.g2018_tsmart_precinct` in BQ
+  #   2) MIT Election Lab data: https://github.com/MEDSL/2018-elections-official/blob/master/precinct_2018.zip
+  # They both didn't have these precincts
+  # filter(!is.na(mov_2020), !is.na(mov_2018))
+
+pct_tx22 <- 
+  pct_results %>% 
+    filter(office == "tx22")
+  
+pct_tx22_wide <- 
+  pct_tx22 %>% 
+    pivot_wider(
+      id_cols = c(county, pct),
+      names_from = year,
+      values_from = c(votes, mov)
+    ) %>% 
+    left_join(pct_demographics, by = c("county", "pct")) %>% 
+    mutate(
+      turnout_2020 = votes_2020 / registered_voters_2020,
+      turnout_2018 = votes_2018 / registered_voters_2018,
+      turnout_2020 = if_else(turnout_2020 > 1, NA_real_, turnout_2020),
+      turnout_2018 = if_else(turnout_2018 > 1, NA_real_, turnout_2018)
+    ) 
+```
+
+```{r}
+pct_results %>% 
+  group_by(year, office) %>% 
+  summarize(
+    votes = sum(votes), 
+    dem_margin = round((sum(dem) / sum(votes) - sum(gop) / sum(votes)) * 100, 2)
+  ) %>% 
+  knitr::kable()
+```
+
+## How did we fare compared to 2018?
+
+```{r}
+pct_tx22_wide %>% 
+  ggplot(aes(mov_2020 - mov_2018)) +
+  geom_histogram(binwidth = 0.025) +
+  geom_vline(xintercept = 0, color = "red", alpha = 0.5, size = 2) +
+  scale_x_continuous(labels = scales::label_percent(accuracy = 1)) +
+  theme_light() +
+  labs(
+    title = "TX-22: '18 to '20 Margin of Victories by PCT",
+    x = "2018-2020 change in Democratic vote margin"
+  )
+```
+
+We lost support in many precincts: what happened?
+
+To investigate, we'll perform an Ecological Study at the precinct level, for each of 4  ethnicities modeled in the voter file: White, Black, Asian, and Hispanic. 
+
+```{r}
+margin_change_by_demographic <- function(...) {
+  pct_plot(
+    ..., 
+    y_var = mov_2020 - mov_2018,
+    y_lab = "2018-2020 change in\nDemocratic vote margin, %"
+  )
+}
+
+pct_plot <- function(
+  df, x_var, y_var,
+  title, x_lab, y_lab,
+  x_min = 0, x_max = 1, x_jump = 0.05, 
+  y_min = -1, y_max = 1, y_jump = 0.05,
+  href = TRUE
+) {
+  x_var <- enquo(x_var)
+  y_var <- enquo(y_var)
+  
+  g <- 
+    df %>% 
+    ggplot(aes(!!x_var, !!y_var))
+  
+  if (href) {
+    g <- g +  geom_hline(yintercept = 0, color = color_gop, alpha = 0.2, size = 2)
+  }
+  
+  g +
+    geom_point(
+      aes(size = votes_2020, fill = mov_2020),
+      # alpha = 0.5,
+      shape = 21
+    ) +
+    geom_smooth() +
+    scale_x_continuous(
+      breaks = seq(x_min, x_max, x_jump),
+      minor_breaks = FALSE,
+      labels = scales::label_percent(accuracy = 1, suffix = "")
+    ) +
+    scale_y_continuous(
+      breaks = seq(y_min, y_max, y_jump), 
+      minor_breaks = FALSE,
+      labels = scales::label_percent(accuracy = 1, suffix = ""),
+    ) +
+    scale_fill_gradient2(
+      low = color_gop, 
+      high = color_dem,
+      labels = scales::label_percent(accuracy = 1, suffix = "")
+    ) +
+    scale_size(range = c(1, 10)) +
+    labs(
+      title = title,
+      x = x_lab,
+      y = y_lab,
+      size = "*2020 votes*",
+      fill = "*2020 Democratic margin, %*"
+    ) +
+     guides(
+      fill = guide_colorbar(
+        title.position = "top",
+        barwidth = 8,
+        barheight = 0.25,
+        raster = FALSE,
+        nbin = 8,
+        ticks = FALSE,
+      ),
+      size = guide_legend(title.position = "top")
+    ) +
+    theme_minimal() + 
+    theme(
+      legend.position = "bottom",
+      legend.title = element_markdown(size = 8),
+      legend.text = element_text(size = 6)
+    )
+}
+```
+
+## 2018-2020 change in Democratic margin, by ethnicity
+
+```{r}
+pct_tx22_wide %>% 
+  margin_change_by_demographic(
+    model_white / registered_voters_2020, 
+    "White", 
+    "White voters, %",
+    x_jump = 0.1
+  )
+```
+
+
+```{r}
+pct_tx22_wide %>% 
+  margin_change_by_demographic(
+    model_aapi / registered_voters_2020, 
+    "AAPI", 
+    "AAPI voters, %",
+    x_jump = 0.1
+  )
+
+pct_tx22_wide %>% 
+  margin_change_by_demographic(
+    model_black / registered_voters_2020, 
+    "Black", 
+    "Black voters, %"
+  )
+
+pct_tx22_wide %>% 
+  margin_change_by_demographic(
+    model_latinx / registered_voters_2020, 
+    "Latinx", 
+    "Latinx voters, %"
+  )
+```
+Some key takeaways:
+
+1. We lost support in precincts with a higher proportion of AAPI voters.
+2. We lost support in precincts with a lower proportion of white voters.
+3. In precincts with a higher proportion of white voters, support remained steady compared to 2018, though we still suffered big losses in 2020.
+4. Precincts with a higher proportion of black voters supported us.
+5. Support among high-density latinx precincts was generally worse this cycle, though overall these precincts were a mixed bag (some went for Nehls, some went for Kulkarni).
+
+AAPI is most interesting, given it was a major focus of our campaign. Let's dive in.
+
+
+## What happened to the AAPI population?
+
+# ```{r}
+# pct_tx22_wide %>% 
+#   margin_change_by_demographic(
+#     desi / registered_voters_2020, 
+#     "High-density Desi precincts lost support", 
+#     "Desi voters, %"
+#   )
+# ```
+
+```{r}
+pct_tx22_wide %>% 
+  mutate(
+    pct_desi = desi / registered_voters_2020,
+    highlight = pct_desi >= 0.1
+  ) %>% 
+  ggplot(aes(mov_2018, mov_2020 - mov_2018)) +
+  geom_hline(yintercept = 0, color = "gray", alpha = 0.5, size = 1) +
+  geom_vline(xintercept = 0, color = "gray", alpha = 0.5, size = 1) +
+  geom_point(
+    aes(
+      size = votes_2020, 
+      color = pct_desi, 
+      alpha = highlight
+    ), 
+    shape = 20
+  ) +
+  geom_text(aes(
+    label = if_else(highlight, as.character(pct), "")), 
+    size = 1.5
+  ) +
+  annotate(
+    "text", 
+    x = Inf, 
+    y = 0, 
+    label = c("Better 2020 margin", "Worse 2020 margin"),
+    size = 2,
+    color = c(color_dem, color_gop),
+    hjust = 1.05,
+    vjust = c(-1, 1.8)
+  ) +
+  scale_alpha_discrete(range = c(0.1, 0.5)) +
+  scale_size(breaks = seq(0, 10000, 2500), range = c(1, 15)) +
+  scale_color_viridis_c(label = scales::percent_format(accuracy = 1)) +
+  scale_x_continuous(
+    breaks = seq(-1, 1, 0.2), 
+    minor_breaks = FALSE,
+    labels = scales::percent_format()
+  ) +
+  scale_y_continuous(
+    breaks = seq(-1, 1, 0.05), 
+    minor_breaks = FALSE,
+    labels = scales::percent_format(accuracy = 1)
+  ) +
+  guides(
+    alpha = FALSE, 
+    size = FALSE, 
+    color = guide_colorbar(
+      barwidth = 0.25,
+      barheight = 9,
+      raster = FALSE,
+      nbin = 8,
+      ticks = FALSE
+    )
+  ) +
+  labs(
+    title = "Change in precinct margin (precincts with > 10% desis are highlighted)",
+    subtitle = "High-density Desi precincts lost support",
+    x = "2018 Democratic vote margin",
+    y = "2018-2020 change in Democratic vote margin",
+    color = "% Desi",
+    caption = "Source: DNC ('18 data), FB/Brazoria/Harris Board of Elections ('20 data)"
+  ) +
+  theme_minimal() + 
+  theme(plot.caption = element_text(size = 5))
+```
+Both these plots basically show the same thing -- high-density Desi precincts lost support.
+Let's see if Hindus and Muslims behaved any differently.
+
+```{r}
+pct_tx22_wide %>% 
+  mutate(
+    better = mov_2020 - mov_2018 > 0,
+    frac_muslim = muslim / registered_voters_2020,
+    frac_hindu = hindu / registered_voters_2020
+  ) %>%
+  ggplot(aes(frac_muslim, frac_hindu)) +
+  geom_point(
+    aes(
+      size = abs(mov_2020 - mov_2018), fill = better),
+    alpha = 0.3,
+    shape = 21
+  ) +
+  scale_x_continuous(
+    breaks = seq(0, 1, 0.05), 
+    minor_breaks = FALSE,
+    labels = scales::percent
+  ) +
+  scale_y_continuous(
+    breaks = seq(0, 1, 0.05), 
+    minor_breaks = FALSE,
+    labels = scales::percent
+  ) +
+  guides(
+    fill = FALSE
+  ) +
+  labs(
+    title = "Change in precinct margin: Hindu and Muslim populations",
+    x = "% Muslim",
+    y = "% Hindu",
+    # size = "No. 2020 Voters",
+    size = "Change in Margin",
+    caption = "Source: DNC ('18 data), FB/Brazoria/Harris Board of Elections ('20 data)"
+  ) +
+  theme_minimal() +
+  theme(plot.caption = element_text(size = 5), legend.position = "bottom")
+```
+They're pretty well-correlated, so not much to find here.
+
+So it looks like we did better with whites than minorities (not in absolute terms, just compared to 2018).
+To Note: This assumes static demographics for the precincts since 2018 -- so e.g., if more minorities entered these
+white-heavy communities (even if they were still white-heavy), it's possible the margins went up not because of change
+in voting behavior of white voters, but rather because of a change in demographics.
+
+Same thing for non-white communities: maybe votes decreased for Sri because of a population shift away from those communities
+of color ... that feels unlikely but possible.
+
+If I can get 2018 demographic data, can I do a difference in difference?
+
+Sri says generally non-white proportion of electorate increased ... so increase in white precinct support may just come
+from more non-white voters in those white-heavy precincts (compared to 2018).
+
+
+## How did Kulkarni compare to Biden and Hegar?
+
+
+```{r}
+# Maybe something? Shows gap in dem margin b/t president and senate/congress that's
+# largest in high-density AAPI precincts.
+pct_results %>% 
+  filter(year == 2020) %>% 
+  left_join(pct_demographics, by = c("county", "pct")) %>% 
+  ggplot(aes(model_aapi / registered_voters_2020, mov)) +
+  geom_smooth(aes(group = office, color = office), alpha = 0.2) +
+  geom_point(aes(fill = office), alpha = 0.5, shape = 21) +
+  labs(
+    title = "Margin of Victory "
+  ) +
+  theme_minimal()
+```
+
+```{r}
+pct_results %>% 
+  filter(year == 2020) %>% 
+  group_by(year, office) %>% 
+  summarize(
+    gop = sum(gop), 
+    dem = sum(dem),
+    other = sum(other),
+    .groups = "drop"
+  ) %>% 
+  transmute(
+    office,
+    votes = dem + gop + other,
+    dem_vote_share = dem / votes * 100,
+    gop_vote_share = gop / votes * 100,
+    other_vote_share = other / votes * 100,
+    mov = (dem_vote_share - gop_vote_share)
+  )
+```
+
+
+```{r}
+df_annotation <- 
+  tibble(
+    county = factor("Fort Bend", levels = c("Fort Bend", "Brazoria", "Harris")),
+    year = "2020 Kulkarni v. Hegar"
+  )
+pct_results %>% 
+  # filter(year == 2018 | office == "president") %>% 
+  pivot_wider(
+    id_cols = c(county, pct),
+    names_from = c(office, year),
+    names_prefix = "mov_",
+    values_from = mov
+  ) %>% 
+  left_join(pct_demographics, by = c("county", "pct")) %>% 
+  mutate(
+    mov_dropoff_2020 = mov_tx22_2020 - mov_senate_2020,
+    mov_dropoff_2018 = mov_tx22_2018 - mov_senate_2018
+  ) %>% 
+  filter(!is.na(mov_dropoff_2020), !is.na(mov_dropoff_2018)) %>% 
+  pivot_longer(
+    cols = starts_with("mov_dropoff"),
+    names_to = "year",
+    names_prefix = "mov_dropoff_",
+    values_to = "mov_dropoff"
+  ) %>% 
+  mutate(
+    year = fct_recode(
+      year, 
+      "2018 Kulkarni v. O'Rourke" = "2018",
+      "2020 Kulkarni v. Hegar" = "2020"
+    ),
+    county = fct_relevel(county, "Fort Bend", "Brazoria", "Harris")
+  ) %>% 
+  ggplot() +
+  geom_histogram(aes(mov_dropoff), binwidth = 0.01) +
+  geom_vline(
+    aes(xintercept = avg, color = avg > 0),
+    alpha = 0.5,
+    size = 1,
+    data = function(df) {
+      df %>%
+        group_by(county, year) %>% 
+        summarize(avg = median(mov_dropoff), .groups = "drop")
+    }
+  ) +
+  geom_vline(xintercept = 0, color = "grey", alpha = 0.5, size = 1) +
+  geom_text(
+    x = -6, y = 18,
+    label = "Median ΔMoV\nacross precincts",
+    size = 2.5,
+    data = df_annotation,
+  ) +
+  geom_segment(
+    x = -3.5, y = 18.5, xend = -2, yend = 15.5,
+    arrow = arrow(length = unit(0.2, "cm")),
+    data = df_annotation
+  ) +
+  scale_x_continuous(
+    breaks = seq(-1, 1, 0.02),
+    minor_breaks = FALSE,
+    labels = scales::label_percent(accuracy = 1)
+  ) +
+  scale_color_manual(values = c(color_gop, color_dem)) +
+  facet_grid(rows = vars(county), cols = vars(year)) +
+  labs(
+    title = str_glue(
+      "Did the median TX-22 precinct perform **<span style='color:{color_dem}'>better</span>** or **<span style='color:{color_gop}'>worse</span>** for Kulkarni <br/>than for the up-ballot Senate race?"
+    ),
+    subtitle = "In 2018, median **Democratic margin** is close across all three counties.<br/>In 2020, median **Margin of Victory (MoV)** behind in Fort Bend: Nehls' name recognition, or something else?",
+    x = "Difference in Democratic margin (Kulkarni minus Senate)",
+    caption = "Source: DNC ('18 data), FB/Brazoria/Harris Board of Elections ('20 data)"
+  ) +
+  guides(color = FALSE) +
+  theme_bw() +
+  theme(
+    plot.title = element_markdown(),
+    plot.subtitle = element_markdown(size = 8),
+    plot.caption = element_text(size = 5),
+  )
+```
+
+```{r}
+pct_results %>% 
+  left_join(pct_demographics, by = c("county", "pct")) %>% 
+  filter(year == "2020", office == "tx22") %>% 
+  group_by(year, office, county) %>% 
+  summarize(sum(desi, na.rm = TRUE)/sum(registered_voters_2020, na.rm = TRUE))
+```
+```{r}
+pct_results %>% 
+  pivot_wider(
+    id_cols = c(county, pct),
+    names_from = c(office, year),
+    names_prefix = "votes_",
+    values_from = votes
+  ) %>% 
+  mutate(undervotes = votes_president_2020 - votes_tx22_2020) %>% 
+  left_join(pct_tx22_wide, by = c("county", "pct")) %>% 
+  pct_plot(
+    model_white / registered_voters_2020, 
+    undervotes / votes_president_2020,
+    title = "Ballot drop-off more common in precincts with more non-white voters",
+    x_lab = "White Voters, %",
+    y_lab = "Undervotes, %",
+    y_jump = 0.01,
+    href = FALSE
+  ) +
+  labs(
+    subtitle = "Undervotes: fraction of presidential voters who didn't vote for their U.S. House representative"
+  )
+  # theme(title = elemnt_text(size = 5))
+```
+
+```{r}
+pct_results %>% 
+  pivot_wider(
+    id_cols = c(county, pct),
+    names_from = c(office, year),
+    names_prefix = "votes_",
+    values_from = votes
+  ) %>% 
+  summarize(sum(votes_president_2020))
+  
+```
+
+
+---
+
+Theories
+---------
+Did Hindus & Muslims vote for Nehls, Leblanc, or not vote at all?
+Muslims might have voted for Leblanc (didn't like Troy). Hindus likely voted for Nehls.
+
+phone banks -- who we dialed, who answered the phone (demographics),
+
+how many voted from each group, what was their propensity dem or gop, % of that demographic in TX-22
