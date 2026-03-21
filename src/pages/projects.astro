@@ -21,13 +21,27 @@ interface Publication {
 }
 
 const projects: Project[] = [
-  // Add your projects here! Example:
-  // {
-  //   title: "Project Name",
-  //   description: "What it does.",
-  //   url: "https://github.com/...",
-  //   tags: ["tag1", "tag2"],
-  // },
+  {
+    title: "CompactConnect",
+    description:
+      'Open-source data system for sharing professional licensure data across state lines. Built for the Council of State Governments (CSG), CompactConnect enables interstate licensing compacts to share credentials, verify licenses, and track participation &mdash; <a href="https://www.usdigitalresponse.org/resources/building-compact-connect-revolutionizing-interstate-professional-licensing" target="_blank" rel="noopener noreferrer" class="underline decoration-dashed underline-offset-4 hover:text-accent">saving an estimated $1.1M per compact</a> versus building from scratch. Currently supports Audiology &amp; Speech-Language Pathology, Counseling, and Occupational Therapy compacts, with more on the way.',
+    url: "https://github.com/csg-org/CompactConnect",
+    tags: ["gov-tech", "open-source", "python", "vue.js", "typescript"],
+  },
+  {
+    title: "SeqHub",
+    description:
+      "Backend engineer at Tatta Bio, building SeqHub -- a platform for exploring, annotating, and sharing biological sequences at scale.",
+    url: "https://seqhub.org/",
+    tags: ["biotech", "python", "genomics"],
+  },
+  {
+    title: "OutReach",
+    description:
+      'Open-source campaign tools for relational voter mobilization. Built <a href="https://github.com/ossoffforsenate/OutReach" target="_blank" rel="noopener noreferrer" class="underline decoration-dashed underline-offset-4 hover:text-accent">OutReach</a> in under a week to contact 17k+ voters in the final two days of a U.S. Senate race, along with a <a href="https://github.com/ossoffforsenate/relational" target="_blank" rel="noopener noreferrer" class="underline decoration-dashed underline-offset-4 hover:text-accent">relational organizing dashboard</a> supporting 3,000 voter mobilizers reaching over 160k voters. Published <a href="https://medium.com/@davisleonard/how-we-built-a-relational-network-of-160k-voters-in-less-than-a-month-92262926fdb0" target="_blank" rel="noopener noreferrer" class="underline decoration-dashed underline-offset-4 hover:text-accent">analysis</a> showing the program improved turnout by an estimated 3.8 percentage points.',
+    url: "https://github.com/ossoffforsenate/OutReach",
+    tags: ["politics", "data", "open-source"],
+  },
 ];
 
 const publications: Publication[] = [
@@ -74,7 +88,7 @@ const publications: Publication[] = [
   <Header />
   <main id="main-content" class="app-layout">
     <div class="mx-auto pt-12 pb-6">
-      <h1 class="text-3xl font-bold sm:text-4xl">Projects & Publications</h1>
+      <h1 class="text-3xl font-bold sm:text-4xl">Selected Work</h1>
     </div>
 
     {
@@ -98,9 +112,7 @@ const publications: Publication[] = [
                     project.title
                   )}
                 </h3>
-                <p class="mt-2 text-sm leading-relaxed text-foreground/75">
-                  {project.description}
-                </p>
+                <p class="mt-2 text-sm leading-relaxed text-foreground/75" set:html={project.description} />
                 <div class="mt-3 flex flex-wrap gap-1.5">
                   {project.tags.map(tag => (
                     <span class="rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-foreground/70">
