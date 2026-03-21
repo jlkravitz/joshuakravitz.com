@@ -1,0 +1,8 @@
+# Redirect old Hugo URLs to new Astro URLs
+/post/my-first-post/    /posts/my-first-post/    301
+/post/what-is-causality/    /posts/what-is-causality/    301
+/post/guide-to-political-data/    /posts/guide-to-political-data/    301
+/publication/*    /projects/    301
+
+# Domain redirect
+https://joshuakravitz.me/*    https://joshuakravitz.com/:splat    301
