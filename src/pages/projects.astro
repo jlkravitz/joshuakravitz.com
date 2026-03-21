@@ -1,0 +1,162 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import Header from "@/components/Header.astro";
+import Footer from "@/components/Footer.astro";
+
+interface Project {
+  title: string;
+  description: string;
+  url?: string;
+  tags: string[];
+}
+
+interface Publication {
+  title: string;
+  year: number;
+  abstract: string;
+  authors: string;
+  publication: string;
+  url: string;
+  tags: string[];
+}
+
+const projects: Project[] = [
+  // Add your projects here! Example:
+  // {
+  //   title: "Project Name",
+  //   description: "What it does.",
+  //   url: "https://github.com/...",
+  //   tags: ["tag1", "tag2"],
+  // },
+];
+
+const publications: Publication[] = [
+  {
+    title:
+      "The Emotional Toll of Inflammatory Bowel Disease: Using Machine Learning to Analyze Online Community Forum Discourse",
+    year: 2019,
+    abstract:
+      "Patients with inflammatory bowel disease are using online community forums (OCFs) to seek emotional support. The impact of OCFs on well-being and their emotional content are unknown. We used an unsupervised machine learning algorithm to identify the thematic content of 51,591 public, online posts from the Crohn's & Colitis Foundation Community Forum. We identified 10,702 (20.8%) posts expressing: gratitude (40%), anxiety/fear (20.8%), empathy (18.2%), anger/frustration (13.4%), hope (13.2%), happiness (10.0%), sadness/depression (5.8%), shame/guilt (2.5%), and/or loneliness (2.5%). A common subtheme was the importance of fostering social support. High-throughput, machine learning-directed analysis of OCFs may help identify psychosocial impacts of inflammatory bowel disease on patients and their caregivers.",
+    authors:
+      "Robert Lerrigo, Johnny TR Coffey, Joshua L Kravitz, Priyanka Jadhav, Azadeh Nikfarjam, Nigam H Shah, Dan Jurafsky, Sidhartha R Sinha",
+    publication: "Crohn's & Colitis 360",
+    url: "https://academic.oup.com/crohnscolitis360/article/1/2/otz011/5527425",
+    tags: ["machine-learning", "nlp", "healthcare"],
+  },
+  {
+    title:
+      "Visual genome: Connecting language and vision using crowdsourced dense image annotations",
+    year: 2017,
+    abstract:
+      "Despite progress in perceptual tasks such as image classification, computers still perform poorly on cognitive tasks such as image description and question answering. Cognition is core to tasks that involve not just recognizing, but reasoning about our visual world. However, models used to tackle the rich content in images for cognitive tasks are still being trained using the same datasets designed for perceptual tasks. To achieve success at cognitive tasks, models need to understand the interactions and relationships between objects in an image. In this paper, we present the Visual Genome dataset to enable the modeling of such relationships. We collect dense annotations of objects, attributes, and relationships within each image to learn these models. Specifically, our dataset contains over 108K images where each image has an average of 35 objects, 26 attributes, and 21 pairwise relationships between objects.",
+    authors:
+      "Ranjay Krishna, Yuke Zhu, Oliver Groth, Justin Johnson, Kenji Hata, Joshua Kravitz, Stephanie Chen, Yannis Kalantidis, Li-Jia Li, David A Shamma, et al.",
+    publication: "International Journal of Computer Vision",
+    url: "https://link.springer.com/article/10.1007/S11263-016-0981-7",
+    tags: ["computer-vision", "ai", "crowdsourcing"],
+  },
+  {
+    title: "Embracing error to enable rapid crowdsourcing",
+    year: 2016,
+    abstract:
+      "Microtask crowdsourcing has enabled dataset advances in social science and machine learning, but existing crowdsourcing schemes are too expensive to scale up with the expanding volume of data. To scale and widen the applicability of crowdsourcing, we present a technique that produces extremely rapid judgments for binary and categorical labels. Rather than punishing all errors, which causes workers to proceed slowly and deliberately, our technique speeds up workers' judgments to the point where errors are acceptable and even expected. We demonstrate that it is possible to rectify these errors by randomizing task order and modeling response latency. Where prior work typically achieves a 0.25x to 1x speedup over fixed majority vote, our approach often achieves an order of magnitude (10x) speedup.",
+    authors:
+      "Ranjay A Krishna, Kenji Hata, Stephanie Chen, Joshua Kravitz, David A Shamma, Li Fei-Fei, Michael S Bernstein",
+    publication:
+      "Proceedings of the 2016 CHI conference on human factors in computing systems",
+    url: "https://arxiv.org/abs/1602.04506",
+    tags: ["crowdsourcing", "hci"],
+  },
+];
+---
+
+<Layout>
+  <Header />
+  <main id="main-content" class="app-layout">
+    <div class="mx-auto pt-12 pb-6">
+      <h1 class="text-3xl font-bold sm:text-4xl">Projects & Publications</h1>
+    </div>
+
+    {
+      projects.length > 0 && (
+        <section class="pb-10">
+          <h2 class="mb-4 text-2xl font-semibold tracking-wide">Projects</h2>
+          <div class="space-y-6">
+            {projects.map(project => (
+              <article class="rounded-lg border border-border p-5 transition-colors hover:bg-muted/30">
+                <h3 class="text-lg font-semibold leading-snug">
+                  {project.url ? (
+                    <a
+                      href={project.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="hover:text-accent"
+                    >
+                      {project.title}
+                    </a>
+                  ) : (
+                    project.title
+                  )}
+                </h3>
+                <p class="mt-2 text-sm leading-relaxed text-foreground/75">
+                  {project.description}
+                </p>
+                <div class="mt-3 flex flex-wrap gap-1.5">
+                  {project.tags.map(tag => (
+                    <span class="rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-foreground/70">
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
+      )
+    }
+
+    <section class="pb-12">
+      <h2 class="mb-4 text-2xl font-semibold tracking-wide">Publications</h2>
+      <div class="space-y-6">
+        {
+          publications.map(pub => (
+            <article class="rounded-lg border border-border p-5 transition-colors hover:bg-muted/30">
+              <div class="flex flex-wrap items-baseline gap-2">
+                <h3 class="text-lg font-semibold leading-snug">
+                  <a
+                    href={pub.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="hover:text-accent"
+                  >
+                    {pub.title}
+                  </a>
+                </h3>
+                <span class="text-sm text-foreground/60">{pub.year}</span>
+              </div>
+
+              <p class="mt-1 text-sm italic text-foreground/60">
+                {pub.publication}
+              </p>
+
+              <p class="mt-1 text-sm text-foreground/50">{pub.authors}</p>
+
+              <p class="mt-2 text-sm leading-relaxed text-foreground/75">
+                {pub.abstract}
+              </p>
+
+              <div class="mt-3 flex flex-wrap gap-1.5">
+                {pub.tags.map(tag => (
+                  <span class="rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-foreground/70">
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            </article>
+          ))
+        }
+      </div>
+    </section>
+  </main>
+  <Footer />
+</Layout>

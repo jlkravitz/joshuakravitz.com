@@ -1,0 +1,23 @@
+export const SITE = {
+  website: "https://joshuakravitz.com/",
+  author: "Joshua Kravitz",
+  profile: "https://joshuakravitz.com/",
+  desc: "Software engineer working on gov and biotech. Writes about technology, policy, data, and life.",
+  title: "Joshua Kravitz",
+  ogImage: "astropaper-og.jpg",
+  lightAndDarkMode: true,
+  postPerIndex: 4,
+  postPerPage: 4,
+  scheduledPostMargin: 15 * 60 * 1000,
+  showArchives: true,
+  showBackButton: true,
+  editPost: {
+    enabled: false,
+    text: "",
+    url: "",
+  },
+  dynamicOgImage: true,
+  dir: "ltr",
+  lang: "en",
+  timezone: "America/New_York",
+} as const;

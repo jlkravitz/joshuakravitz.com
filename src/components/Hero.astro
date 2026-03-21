@@ -1,0 +1,186 @@
+---
+import { Image } from "astro:assets";
+import avatarImg from "@/assets/images/avatar.jpg";
+import IconMail from "@/assets/icons/IconMail.svg";
+import IconBrandX from "@/assets/icons/IconBrandX.svg";
+import IconScholar from "@/assets/icons/IconScholar.svg";
+import IconGitHub from "@/assets/icons/IconGitHub.svg";
+import IconLinkedin from "@/assets/icons/IconLinkedin.svg";
+import IconDocument from "@/assets/icons/IconDocument.svg";
+
+const socialLinks = [
+  { href: "mailto:josh@joshuakravitz.com", label: "Email", icon: IconMail },
+  {
+    href: "https://twitter.com/_joshuakravitz",
+    label: "X / Twitter",
+    icon: IconBrandX,
+  },
+  {
+    href: "https://scholar.google.com/citations?user=0Y66fogAAAAJ",
+    label: "Google Scholar",
+    icon: IconScholar,
+  },
+  {
+    href: "https://github.com/jlkravitz",
+    label: "GitHub",
+    icon: IconGitHub,
+  },
+  {
+    href: "https://linkedin.com/in/jlkravitz",
+    label: "LinkedIn",
+    icon: IconLinkedin,
+  },
+  { href: "/files/resume.pdf", label: "Resume", icon: IconDocument },
+];
+
+const interests = [
+  "Government service delivery",
+  "Civic engagement",
+  "Progressive analytics",
+  "Leadership and management",
+];
+
+const education = [
+  {
+    degree: "MS in Statistics (Causal Inference)",
+    institution: "Stanford University",
+    year: 2020,
+  },
+  {
+    degree: "BS in Computer Science (Systems)",
+    institution: "Stanford University",
+    year: 2018,
+  },
+];
+---
+
+<section class="pt-8 pb-10 sm:pt-12 sm:pb-14">
+  <div
+    class="flex flex-col items-center gap-8 sm:flex-row sm:items-start sm:gap-12"
+  >
+    <div class="flex shrink-0 flex-col items-center gap-3">
+      <Image
+        src={avatarImg}
+        alt="Joshua Kravitz"
+        width={200}
+        height={200}
+        class="rounded-full"
+      />
+      <h2 class="text-xl font-semibold">Joshua Kravitz</h2>
+      <div class="flex items-center gap-2">
+        {
+          socialLinks.map(({ href, label, icon: Icon }) => (
+            <a
+              href={href}
+              target={
+                href.startsWith("/") || href.startsWith("mailto:")
+                  ? undefined
+                  : "_blank"
+              }
+              rel={
+                href.startsWith("/") || href.startsWith("mailto:")
+                  ? undefined
+                  : "noopener noreferrer"
+              }
+              title={label}
+              class="rounded-sm p-1.5 opacity-80 transition-opacity hover:opacity-100"
+            >
+              <Icon class="size-5 fill-transparent stroke-current stroke-2" />
+              <span class="sr-only">{label}</span>
+            </a>
+          ))
+        }
+      </div>
+    </div>
+
+    <div class="text-center sm:text-left">
+      <h1 class="mb-4 text-3xl font-bold sm:text-4xl">Hi, I'm Joshua!</h1>
+      <div class="space-y-3 leading-relaxed text-foreground/85">
+        <p>I'm a technologist looking to make a difference.</p>
+        <p>
+          I lead technology modernization efforts on the <a
+            href="https://www.appropriations.senate.gov/"
+            class="underline decoration-dashed underline-offset-4 hover:text-accent"
+            >U.S. Senate Committee on Appropriations</a
+          >. Before coming to the Senate, I worked on the House Committee on
+          Oversight and Reform through the <a
+            href="https://techcongress.io"
+            class="underline decoration-dashed underline-offset-4 hover:text-accent"
+            >TechCongress Program</a
+          >, with a focus on IT modernization, customer experience, and data
+          governance.
+        </p>
+        <p>
+          After graduating in June 2020 from Stanford University with a B.S. in
+          computer science (focus: systems and AI) and M.S. in statistics
+          (focus: causal inference), I dove into the world of political
+          campaigns: I was Deputy Data Director on Jon Ossoff's <a
+            href="https://electjon.com"
+            class="underline decoration-dashed underline-offset-4 hover:text-accent"
+            >campaign for U.S. Senate</a
+          > and Data Director on Sri Kulkarni's <a
+            href="https://sri2020.com"
+            class="underline decoration-dashed underline-offset-4 hover:text-accent"
+            >congressional campaign</a
+          >.
+        </p>
+        <p>
+          While I wasn't researching new methods for estimating causal effects at
+          Stanford, I oversaw the student leadership team for <a
+            href="https://campkesemstanford.org"
+            class="underline decoration-dashed underline-offset-4 hover:text-accent"
+            >Camp Kesem at Stanford</a
+          >.
+        </p>
+        <p>
+          In my free time, I watch TV, read, play jazz piano, bake sourdough,
+          and <a
+            href="https://www.improvwisdom.com/"
+            class="underline decoration-dashed underline-offset-4 hover:text-accent"
+            >improvise</a
+          >. To me, improvisation is more than a fun hobby -- it's a way of
+          life. My favorite improv maxims are "Say Yes," "Follow the Fear," and
+          "Mistakes are Gifts."
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Interests & Education -->
+  <div class="mt-10 grid grid-cols-1 gap-8 sm:grid-cols-2">
+    <div>
+      <h3 class="mb-3 text-lg font-semibold">Interests</h3>
+      <ul class="list-disc space-y-1 pl-5 text-foreground/80">
+        {interests.map(interest => <li>{interest}</li>)}
+      </ul>
+    </div>
+
+    <div>
+      <h3 class="mb-3 text-lg font-semibold">Education</h3>
+      <div class="space-y-3">
+        {
+          education.map(edu => (
+            <div class="flex items-start gap-3">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="mt-0.5 size-5 shrink-0 text-foreground/60"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path d="M12 3L1 9l4 2.18v6L12 21l7-3.82v-6l2-1.09V17h2V9L12 3z" />
+              </svg>
+              <div>
+                <div class="font-medium">
+                  {edu.degree}, {edu.year}
+                </div>
+                <div class="text-sm text-foreground/60">{edu.institution}</div>
+              </div>
+            </div>
+          ))
+        }
+      </div>
+    </div>
+  </div>
+</section>
