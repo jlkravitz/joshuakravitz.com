@@ -9,6 +9,6 @@ Through my consultancy **Magic Clay LLC**, I work across government and biotech.
 
 Previously, I was a [TechCongress](https://techcongress.io) Fellow on the House Committee on Oversight and Reform, where I focused on IT modernization, customer experience, and data governance. After graduating from Stanford University in 2020 with a B.S. in computer science (focus: systems and AI) and M.S. in statistics (focus: causal inference), I worked on political campaigns: I was Deputy Data Director on Jon Ossoff's [campaign for U.S. Senate](https://electjon.com) and Data Director on Sri Kulkarni's [congressional campaign](https://sri2020.com).
 
-I serve on the board of [Camp Kaleidoscope](https://campkaleidoscope.org), a Stanford-based nonprofit that provides free camp experiences for children in the Bay Area affected by a parent's cancer. At Stanford, I oversaw the student leadership team for [Camp Kesem at Stanford](https://campkesemstanford.org).
+I serve on the board of [Camp Kaleidoscope](https://campkaleidoscope.org), a California Bay Area nonprofit run by student leaders that provides free camp experiences for children affected by a parent's cancer. At Stanford, I oversaw the student leadership team for [Camp Kesem at Stanford](https://campkesemstanford.org).
 
 In my free time, I play jazz piano, bake sourdough, and [improvise](https://www.improvwisdom.com/). To me, improvisation is more than a fun hobby -- it's a way of life. My favorite improv maxims are "Say Yes," "Follow the Fear," and "Mistakes are Gifts."
