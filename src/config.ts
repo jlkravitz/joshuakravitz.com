@@ -2,7 +2,7 @@ export const SITE = {
   website: "https://joshuakravitz.com/",
   author: "Joshua Kravitz",
   profile: "https://joshuakravitz.com/",
-  desc: "Software engineer working on gov and biotech. Writes about technology, policy, data, and life.",
+  desc: "Software engineer working with gov and nonprofits. Writes about technology, policy, data, and life.",
   title: "Joshua Kravitz",
   ogImage: "astropaper-og.jpg",
   lightAndDarkMode: true,

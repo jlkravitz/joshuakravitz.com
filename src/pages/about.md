@@ -5,7 +5,7 @@ title: "About"
 
 I'm a technologist looking to make a difference.
 
-Through my consultancy **Magic Clay LLC**, I work across government and biotech. I'm the tech lead on [CompactConnect](https://github.com/csg-org/CompactConnect), an open-source system for sharing professional licenses across states; a backend engineer at [Tatta Bio](https://tatta.bio), building tools for genomic sequence search; and a government technologist with [Verdance](https://verdance.co). I also serve as Head of Technology and Data on the [U.S. Senate Committee on Appropriations](https://www.appropriations.senate.gov/).
+Through my consultancy **Magic Clay LLC**, I work with government and nonprofits. I'm the tech lead on [CompactConnect](https://github.com/csg-org/CompactConnect), an open-source system for sharing professional licenses across states; a backend engineer at [Tatta Bio](https://tatta.bio), building tools for genomic sequence search; and a government technologist with [Verdance](https://verdance.co). I also serve as Head of Technology and Data on the [U.S. Senate Committee on Appropriations](https://www.appropriations.senate.gov/).
 
 Previously, I was a [TechCongress](https://techcongress.io) Fellow on the House Committee on Oversight and Reform, where I focused on IT modernization, customer experience, and data governance. After graduating from Stanford University in 2020 with a B.S. in computer science (focus: systems and AI) and M.S. in statistics (focus: causal inference), I worked on political campaigns: I was Deputy Data Director on Jon Ossoff's [campaign for U.S. Senate](https://electjon.com) and Data Director on Sri Kulkarni's [congressional campaign](https://sri2020.com).
 
